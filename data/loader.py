@@ -57,6 +57,7 @@ def load_weekly_stats():
                 'completions', 'attempts', 'passing_yards', 'passing_tds',
                 'interceptions', 'carries', 'rushing_yards', 'rushing_tds',
                 'receptions', 'targets', 'receiving_yards', 'receiving_tds',
+                'sack_fumbles_lost', 'rushing_fumbles_lost','receiving_fumbles_lost', 
                 'fantasy_points'
             ]
         )
