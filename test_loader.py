@@ -1,26 +1,27 @@
 from data.loader import load_all
-from analysis.scoring import calculate_ppr_points, get_season_averages, get_career_averages
+from analysis.scoring import calculate_ppr_points
+from analysis.rankings import get_positional_rankings, get_career_rankings, get_trending_players
 
 print("Loading all data...")
 weekly_stats, schedule, rosters = load_all()
 
-print("\n── SCORING ──────────────────────────────────")
-scored = calculate_ppr_points(weekly_stats)
-print(f"Rows: {len(scored)}")
-print(f"PPR points column exists: {'ppr_points' in scored.columns}")
-print(f"Sample PPR points:")
-print(scored[['player_name', 'position', 'season', 'week', 'ppr_points']].head(5))
+print("\n── POSITIONAL RANKINGS (2024) ───────────────")
+rankings = get_positional_rankings(weekly_stats, season=2024)
+for position in ['QB', 'RB', 'WR', 'TE']:
+    print(f"\nTop 5 {position}s:")
+    print(rankings[position][['rank', 'player_name', 'avg_ppr_points', 'games_played']].head())
 
-print("\n── SEASON AVERAGES ──────────────────────────")
-season_avgs = get_season_averages(scored)
-print(f"Rows: {len(season_avgs)}")
-print(f"Columns: {list(season_avgs.columns)}")
-print(season_avgs.head(5))
+print("\n── CAREER RANKINGS ──────────────────────────")
+career = get_career_rankings(weekly_stats)
+for position in ['QB', 'RB', 'WR', 'TE']:
+    print(f"\nTop 5 {position}s (career):")
+    print(career[position][['rank', 'player_name', 'avg_ppr_points', 'total_games']].head())
 
-print("\n── CAREER AVERAGES ──────────────────────────")
-career_avgs = get_career_averages(scored)
-print(f"Rows: {len(career_avgs)}")
-print(f"Columns: {list(career_avgs.columns)}")
-print(career_avgs.head(5))
+print("\n── TRENDING PLAYERS ─────────────────────────")
+trending = get_trending_players(weekly_stats)
+print("Most improved:")
+print(trending[['player_name', 'position', 'trend']].head())
+print("\nMost declined:")
+print(trending[['player_name', 'position', 'trend']].tail())
 
 print("\n── ALL CHECKS PASSED ────────────────────────")
