@@ -102,16 +102,13 @@ def load_rosters():
 
     dfs = []
     for season in SEASONS:
-        df = nfl.import_weekly_rosters(
-            years=[season],
-            columns=[
-                'player_id', 'player_name', 'position', 'team',
-                'season', 'week', 'game_type', 'status',
-                'status_description_abbr', 'years_exp',
-                'entry_year', 'rookie_year',
-                'headshot_url', 'age'
-            ]
-        )
+        df = nfl.import_weekly_rosters(years=[season])
+        df = df[[
+            'player_id', 'player_name', 'position', 'team',
+            'season', 'week', 'game_type', 'status',
+            'status_description_abbr', 'years_exp',
+            'entry_year', 'rookie_year', 'headshot_url'
+        ]]
         dfs.append(df)
 
     combined = pd.concat(dfs, ignore_index=True)
