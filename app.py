@@ -49,3 +49,70 @@ selected_position = st.sidebar.selectbox(
     options=["All", "QB", "RB", "WR", "TE"],
     index=0
 )
+
+# ── PAGES ─────────────────────────────────────────────────
+if page == "Draft Rankings":
+    st.title("📋 Draft Rankings")
+    st.markdown("Player rankings  based on PPR scoring across the last three seasons")
+    st.markdown("---")
+
+    # create two columns, first columns twice as wide as the second column
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        rank_type = st.radio(
+            "Ranking Type",
+            ["Season Rankings", "Career Rankings (3 year average)"],
+            horizontal=True
+        )
+    with col2:
+        show_trending = st.checkbox("Show Trending Players", value=False)
+
+    st.markdown("---")
+
+    # if user chooses season then show them dat for selected season, if not then just show them the averages for the past 3 seasons
+    if rank_type == "Season Rankings":
+        rankings = get_positional_rankings(weekly_stats, season=selected_season)
+    else:
+        rankings = get_career_rankings(weekly_stats)
+    
+    consistency = calculate_consistency(weekly_stats, season=selected_season)
+
+    # show all positions, unless a specific postion has been selected
+    positions_to_show = ['QB', 'RB', 'WR', 'TE'] if selected_position == "All" else [selected_position]
+
+    # loop through each position and get the rankings dataframe, and filter the consistency dataframe for each position
+    for position in positions_to_show:
+        st.subheader(f"{position} Rankings")
+
+        pos_rankings = rankings[position].copy()
+        pos_consistency = consistency[consistency['position'] == position][
+            # select only the player name and grade column from dataframe
+            ['player_name', 'grade']
+        ].rename(columns={'grade': 'consistency_grade'})
+
+        # merge consistency dataframe into rankings dataframe using player name to match values
+        pos_rankings = pos_rankings.merge(
+            pos_consistency,
+            on='player_name',
+            how='left'
+        )
+
+        # create array for columns to display
+        display_cols = ['rank', 'player_name', 'avg_ppr_points', 'games_played', 'consistency_grade']
+        if rank_type == "Career Rankings (3 year average)":
+            display_cols = ['rank', 'player_name', 'avg_ppr_points', 'total_games', 'consistency_grade']
+
+        st.dataframe(
+            pos_rankings[display_cols].rename(columns={
+                'rank':               'Rank',
+                'player_name':        'Player',
+                'avg_ppr_points':     'Avg PPR Pts',
+                'games_played':       'Games Played',
+                'total_games':        'Total Games',
+                'consistency_grade':  'Consistency'
+            }),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.markdown("---")
