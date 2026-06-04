@@ -27,6 +27,10 @@ def calculate_injury_history(weekly_stats, rosters):
         games_played['games_missed'] >= INJURY_RISK_THRESHOLD
     )
 
+    games_played = games_played.drop_duplicates(
+        subset=['player_id', 'season']
+    )
+
     return games_played
 
 def get_durability_summary(weekly_stats, rosters):

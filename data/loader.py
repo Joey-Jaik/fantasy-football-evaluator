@@ -104,7 +104,7 @@ def load_rosters():
     for season in SEASONS:
         df = nfl.import_weekly_rosters(years=[season])
         df = df[[
-            'player_id', 'player_name', 'position', 'team',
+            'player_id', 'player_name', 'first_name', 'last_name','position', 'team',
             'season', 'week', 'game_type', 'status',
             'status_description_abbr', 'years_exp',
             'entry_year', 'rookie_year', 'headshot_url'
