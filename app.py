@@ -5,7 +5,6 @@ from analysis.scoring import calculate_ppr_points
 from analysis.rankings import get_positional_rankings, get_career_rankings, get_trending_players
 from analysis.consistency import calculate_consistency, get_consistency_by_position
 from analysis.injuries import calculate_injury_history, get_durability_summary, get_injury_report, get_current_injury_status
-from analysis.matchups import get_defensive_rankings, get_player_matchups, get_best_matchups, MATCHUP_LABELS
 
 # ── PAGE CONFIG ───────────────────────────────────────────
 st.set_page_config(
@@ -32,7 +31,7 @@ st.sidebar.markdown("---")
 # create page navigation UI
 page = st.sidebar.radio(
     "Navigate",
-    ["Draft Rankings", "Player Profile", "Matchup Analysis", "Season Stats"]
+    ["Draft Rankings", "Player Profile", "Season Stats"]
 )
 
 st.sidebar.markdown("---")
@@ -346,90 +345,6 @@ elif page == "Player Profile":
                     use_container_width=True,
                     hide_index=True
                 )
-
-elif page == "Matchup Analysis":
-    st.title("🔍 Matchup Analysis")
-    st.markdown("Explore how players performed against specific defenses in past seasons. Useful for understanding matchup patterns and defensive tendencies.")
-    st.markdown("---")
-    st.info("This analysis is based on historical data. Use it to understand matchup patterns and defensive tendencies rather than as a current week start/sit tool.")
-
-    # data used should default to most recent data we have available
-    recent_season = 2024
-
-    try:
-        # get season data for most recent season, group data by player then calculate aggregate avg points for entire season
-        season_avgs = (
-            scored[scored['season'] == recent_season]
-            .groupby(['player_id', 'player_name', 'position', 'recent_team'])
-            .agg(avg_ppr_points=('ppr_points', 'mean'))
-            .reset_index()
-            .round(2)
-        )
-
-        # get defensive rankings data and merge with season averages data
-        defensive_rankings = get_defensive_rankings(weekly_stats, season=recent_season)
-
-        season_avgs = season_avgs.merge(
-            defensive_rankings[['opponent_team', 'position', 'matchup_tier', 'avg_pts_allowed']],
-            left_on=['recent_team', 'position'],
-            right_on=['opponent_team', 'position'],
-            how='left'
-        )
-
-        season_avgs['matchup_label'] = season_avgs['matchup_tier'].map(MATCHUP_LABELS)
-
-        # get consistency data and merge with season averages data
-        consistency = calculate_consistency(weekly_stats, season=recent_season)
-        season_avgs = season_avgs.merge(
-            consistency[['player_id', 'grade']].rename(columns={'grade': 'consistency_grade'}),
-            on='player_id',
-            how='left'
-        )
-
-        # create new column in data frame and calculate a start player score, score is calculated with season avg being the heighest weighted values and consistency the least weighted
-        season_avgs['start_score'] = (
-            (season_avgs['avg_ppr_points'] * 0.5) +
-            # subtract from 6 so easier matchups (lower score) add more to the score, provide default value of 3
-            ((6 - season_avgs['matchup_tier'].fillna(3)) * 2) +
-            # map letter grade to number, and provide default value of 2
-            (season_avgs['consistency_grade'].map({'A': 4, 'B': 3, 'C': 2, 'D': 1}).fillna(2))
-        ).round(2)
-
-        season_avgs = season_avgs.sort_values('start_score', ascending=False)
-
-        positions_to_show = ['QB', 'RB', 'WR', 'TE'] if selected_position == 'All' else [selected_position]
-
-        # loop through every selected position, create and display dataframe with data for that position
-        for position in positions_to_show:
-            st.subheader(f"{position} — Historical Matchup Rankings")
-
-            pos_data = season_avgs[season_avgs['position'] == position]
-
-            if pos_data.empty:
-                st.info(f"No {position} matchup data available for this week")
-                continue
-
-            st.dataframe(
-                pos_data[[
-                    'player_name', 'recent_team',
-                    'avg_ppr_points', 'matchup_label',
-                    'consistency_grade', 'start_score'
-                ]].rename(columns={
-                    'player_name':       'Player',
-                    'recent_team':       'Team',
-                    'avg_ppr_points':    'Avg PPR',
-                    'matchup_label':     'Matchup',
-                    'consistency_grade': 'Consistency',
-                    'start_score':       'Score'
-                }),
-                use_container_width=True,
-                hide_index=True
-            )
-            st.markdown("---")
-                
-    except Exception as e:
-        st.error(f"Could not load matchup data for this week: {e}")
-        st.info("Try selecting a different week or season")
 
 elif page == 'Season Stats':
     st.title("📊 Season Stats")
