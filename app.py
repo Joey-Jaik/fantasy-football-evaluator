@@ -203,14 +203,14 @@ elif page == "Player Profile":
             latest_season_data = player_data[player_data['season'] == player_data['season'].max()]
             team = latest_season_data['recent_team'].iloc[0]
 
-            col1, col2, col3 = st.columns([1, 2, 3])
+            col1, col2, col3 = st.columns([3, 2, 3])
 
             # if headshot exists then extract it and display
             with col1:
                 if not player_roster.empty:
                     headshot = player_roster['headshot_url'].dropna()
                     if not headshot.empty:
-                        st.image(headshot.iloc[0], width=150)
+                        st.image(headshot.iloc[0], width=300)
 
             # display player information
             with col2:
@@ -221,7 +221,7 @@ elif page == "Player Profile":
                 if not player_roster.empty:
                     years_exp = player_roster['years_exp'].dropna()
                     if not years_exp.empty:
-                        st.markdown(f"**Experience:** {int(years_exp.iloc[0])} years")
+                        st.markdown(f"**Experience:** {int(years_exp.iloc[0]) + 1} years")
 
             # display player stats
             with col3:
