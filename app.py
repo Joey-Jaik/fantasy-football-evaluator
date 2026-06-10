@@ -430,3 +430,78 @@ elif page == "Matchup Analysis":
     except Exception as e:
         st.error(f"Could not load matchup data for this week: {e}")
         st.info("Try selecting a different week or season")
+
+elif page == 'Season Stats':
+    st.title("📊 Season Stats")
+    st.markdown("Full player statistics for each season. Filter by position and season to explore the data")
+    st.markdown("---")
+
+    rankings = get_positional_rankings(weekly_stats, season=selected_season)
+    consistency = calculate_consistency(weekly_stats, season=selected_season)
+
+    positions_to_show = ['QB', 'RB', 'WR', 'TE'] if selected_position == 'All' else [selected_position]
+
+    # loop through every selected position, get data for rankings, consistency, and injury and merge them all together into one dataframe
+    for position in positions_to_show:
+        st.subheader(f"{position} - {selected_season} Season Stats")
+
+        pos_df = rankings[position].copy()
+
+        pos_consistency = consistency[consistency['position'] == position][
+            ['player_id', 'grade', 'std_ppr_points', 'min_ppr_points', 'max_ppr_points']
+        ].rename(columns={
+            'grade':          'consistency_grade',
+            'std_ppr_points': 'std_dev',
+            'min_ppr_points': 'floor',
+            'max_ppr_points': 'ceiling'
+        })
+
+        pos_df = pos_df.merge(pos_consistency, on='player_id', how='left')
+
+        injury_data = get_durability_summary(weekly_stats, rosters)
+        pos_injury = injury_data[injury_data['position'] == position][
+            ['player_id', 'durability_rating', 'avg_games_missed']
+        ]
+
+        pos_df = pos_df.merge(pos_injury, on='player_id', how='left')
+
+        # create a dictionary that will match column names with new column names
+        display_cols ={
+            'rank': 'Rank',
+            'player_name': 'Player',
+            'avg_ppr_points': 'Avg PPR',
+            'games_played': 'Games',
+            'consistency_grade': 'Consistency',
+            'durability_rating': 'Durability',
+            'avg_games_missed': 'Avg Games Missed'
+        }
+
+        # ensure only certain columns are present depending on position
+        if position == 'QB':
+            display_cols['avg_passing_yds'] = 'Avg Pass Yds'
+            display_cols['avg_passing_tds'] = 'Avg Pass TDs'
+            display_cols['avg_rushing_yds'] = 'Avg Rush Yds'
+            display_cols['avg_rushing_tds'] = 'Avg Rush TDs'
+        elif position == 'RB':
+            display_cols['avg_rushing_yds'] = 'Avg Rush Yds'
+            display_cols['avg_rushing_tds'] = 'Avg Rush TDs'
+            display_cols['avg_receptions'] = 'Avg Rec'
+            display_cols['avg_receiving_yds'] = 'Avg Rec Yds'
+            display_cols['avg_receiving_tds'] = 'Avg Rec TDs'
+        elif position in ['WR', 'TE']:
+            display_cols['avg_receiving_yds'] = 'Avg Rec Yds'
+            display_cols['avg_receptions'] = 'Avg Rec'
+            display_cols['avg_targets'] = 'Avg Targets'
+            display_cols['avg_receiving_tds'] = 'Avg Rec TDs'
+
+        # use list comprehension to go through every key in display_cols and if it exists in the pos dataframe then add to list, ensures that we are only every using columns that exist
+        available_cols = [c for c in display_cols.keys() if c in pos_df.columns]
+
+        # create and display dataframe to user
+        st.dataframe(
+            pos_df[available_cols].rename(columns=display_cols),
+            use_container_width=True,
+            hide_index=True
+        )
+        st.markdown("---")
+

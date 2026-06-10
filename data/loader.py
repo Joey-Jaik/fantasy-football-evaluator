@@ -65,6 +65,8 @@ def load_weekly_stats():
 
     # combine the dataframes for each season into one dataframe
     combined = pd.concat(dfs, ignore_index=True)
+    # only use data from regular season games
+    combined = combined[combined['week'] <= 18]
     # only keep the positions in the combined dataframe that we need
     combined = combined[combined['position'].isin(['QB', 'RB', 'WR', 'TE'])]
 

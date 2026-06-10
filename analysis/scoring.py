@@ -37,15 +37,18 @@ def get_season_averages(df):
     averages = (
         df.groupby(['player_id', 'player_name', 'position', 'season'])
         .agg(
-            games_played    = ('week', 'count'),
-            avg_ppr_points  = ('ppr_points', 'mean'),
-            total_ppr_points= ('ppr_points', 'sum'),
-            avg_passing_yds = ('passing_yards', 'mean'),
-            avg_rushing_yds = ('rushing_yards', 'mean'),
-            avg_receiving_yds=('receiving_yards', 'mean'),
-            avg_receptions  = ('receptions', 'mean'),
-            avg_targets     = ('targets', 'mean'),
-            avg_carries     = ('carries', 'mean'),
+            games_played      = ('week', 'count'),
+            avg_ppr_points    = ('ppr_points', 'mean'),
+            total_ppr_points  = ('ppr_points', 'sum'),
+            avg_passing_yds   = ('passing_yards', 'mean'),
+            avg_passing_tds   = ('passing_tds', 'mean'),
+            avg_rushing_yds   = ('rushing_yards', 'mean'),
+            avg_rushing_tds   = ('rushing_tds', 'mean'),
+            avg_receiving_yds =('receiving_yards', 'mean'),
+            avg_receiving_tds = ('receiving_tds', 'mean'),
+            avg_receptions    = ('receptions', 'mean'),
+            avg_targets       = ('targets', 'mean'),
+            avg_carries       = ('carries', 'mean'),
         )
         .reset_index()
         .round(2)
