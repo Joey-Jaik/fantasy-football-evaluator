@@ -1,3 +1,15 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Builds positional fantasy football rankings for the Fantasy
+#          Football Evaluator. Uses PPR scoring averages to rank players
+#          within each position group - QB, RB, WR, and TE. Provides season
+#          specific rankings, career rankings across all three seasons, and
+#          trending players analysis showing which players improved or
+#          declined year over year. Rankings require a minimum of 4 games
+#          played to filter out small sample sizes.
+# =============================================================================
+
 import pandas as pd
 from analysis.scoring import calculate_ppr_points, get_season_averages, get_career_averages
 

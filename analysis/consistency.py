@@ -1,3 +1,15 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Calculates weekly scoring consistency ratings for the Fantasy
+#          Football Evaluator. Uses coefficient of variation to measure how
+#          reliably each player scores week to week relative to their average.
+#          Assigns letter grades from A (most consistent) to D (most volatile)
+#          based on configurable thresholds. Requires a minimum of 6 games
+#          played for a reliable consistency calculation. Used in Draft
+#          Rankings, Player Profile, and Season Stats pages.
+# =============================================================================
+
 import  pandas as pd
 from analysis.scoring import calculate_ppr_points
 

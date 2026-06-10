@@ -1,3 +1,15 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Analyzes player injury history and durability for the Fantasy
+#          Football Evaluator. Calculates games played versus games missed
+#          per player per season and assigns durability ratings of Elite,
+#          Good, Average, or Risky based on overall availability across all
+#          three tracked seasons. Also retrieves current injury status
+#          designations from the most recent roster data. Requires a minimum
+#          of two seasons of data for durability summary calculations.
+# =============================================================================
+
 import pandas as pd
 
 # ── CONSTANTS ─────────────────────────────────────────────

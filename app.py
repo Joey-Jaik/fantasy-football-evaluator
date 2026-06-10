@@ -1,3 +1,14 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Main Streamlit application entry point for the Fantasy Football
+#          Evaluator. Configures the page layout, loads and caches all NFL
+#          data on startup, and renders three pages - Draft Rankings, Player
+#          Profile, and Season Stats - based on sidebar navigation. Imports
+#          from all analysis modules and combines them into an interactive
+#          web app for fantasy football draft preparation.
+# =============================================================================
+
 import streamlit as st
 import pandas as pd
 from data.loader import load_all

@@ -1,3 +1,15 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Calculates defensive rankings and matchup analysis for the Fantasy
+#          Football Evaluator. Derives defensive strength ratings by analyzing
+#          how many PPR fantasy points each NFL defense has allowed to each
+#          position group across the season. Assigns matchup tiers from 1
+#          (Excellent) to 5 (Very Tough) using quantile based scoring.
+#          Note: this module is not currently used in the app but is retained
+#          for potential future use.
+# =============================================================================
+
 import pandas as pd
 from analysis.scoring import calculate_ppr_points
 

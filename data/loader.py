@@ -1,3 +1,14 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Handles all data fetching and caching for the Fantasy Football
+#          Evaluator. Fetches weekly player stats, schedule data, and roster
+#          information from nfl_data_py for the 2022, 2023, and 2024 seasons.
+#          Implements a file based caching system that saves data to CSV files
+#          to avoid repeated API calls. Cache duration is 24 hours during the
+#          active NFL season and 7 days during the offseason.
+# =============================================================================
+
 import nfl_data_py as nfl
 import pandas as pd
 import os

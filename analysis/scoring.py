@@ -1,3 +1,14 @@
+# =============================================================================
+# Author:  Joey Jaikaran
+# Date:    June 10, 2026
+# Purpose: Handles PPR fantasy football scoring calculations for the Fantasy
+#          Football Evaluator. Takes raw NFL weekly stats and calculates PPR
+#          fantasy points for every player every week using standard PPR
+#          scoring weights. Also provides season and career average
+#          aggregations used by the rankings, consistency, and analysis
+#          modules throughout the app.
+# =============================================================================
+
 import pandas as pd
 
 # ── PPR SCORING WEIGHTS ───────────────────────────────────
