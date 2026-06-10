@@ -9,14 +9,28 @@
 #          active NFL season and 7 days during the offseason.
 # =============================================================================
 
-import nfl_data_py as nfl
+import nflreadpy as nfl
 import pandas as pd
 import os
 import datetime
 
+def get_current_seasons():
+    current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
+    
+    # NFL season runs Sep-Feb, so if we are before September
+    # the most recent completed season is last year
+    # if we are in September or later the current year season has started
+    if current_month >= 9:
+        latest_season = current_year
+    else:
+        latest_season = current_year - 1
+    
+    return [latest_season - 2, latest_season - 1, latest_season]
+
 # ── CONSTANTS ────────────────────────────────────────────
 CACHE_DIR = "data/cache"
-SEASONS = [2022, 2023, 2024]
+SEASONS = get_current_seasons()
 CACHE_DURATION_OFFSEASON =  168 # Don't need to check for current data in offseason
 CACHE_DURATION_INSEASON = 24 
 
@@ -51,34 +65,37 @@ def load_cache(name):
 
 # ── DATA LOADERS ──────────────────────────────────────────
 def load_weekly_stats():
-    # try to load from cache first if available
     if cache_is_valid("weekly_stats"):
         return load_cache("weekly_stats")
-    
+
     print("Fetching weekly stats...")
 
     dfs = []
-    # loop through every season collecting the data we need for each year into a dataframe, and add it to array of dataframes
     for season in SEASONS:
-        df = nfl.import_weekly_data(
-            years=[season],
-            columns=[
-                'player_id', 'player_name', 'position', 'recent_team',
-                'season', 'week', 'opponent_team',
-                'completions', 'attempts', 'passing_yards', 'passing_tds',
-                'interceptions', 'carries', 'rushing_yards', 'rushing_tds',
-                'receptions', 'targets', 'receiving_yards', 'receiving_tds',
-                'sack_fumbles_lost', 'rushing_fumbles_lost','receiving_fumbles_lost', 
-                'fantasy_points'
-            ]
-        )
+        df = nfl.load_player_stats(
+            seasons=[season],
+            summary_level='week'
+        ).to_pandas()
+
+        df = df[[
+            'player_id', 'player_name', 'position', 'team',
+            'season', 'week', 'opponent_team',
+            'completions', 'attempts', 'passing_yards', 'passing_tds',
+            'passing_interceptions', 'carries', 'rushing_yards', 'rushing_tds',
+            'receptions', 'targets', 'receiving_yards', 'receiving_tds',
+            'sack_fumbles_lost', 'rushing_fumbles_lost', 'receiving_fumbles_lost',
+            'fantasy_points'
+        ]]
+
+        df = df.rename(columns={
+            'team':                  'recent_team',
+            'passing_interceptions': 'interceptions'
+        })
+
         dfs.append(df)
 
-    # combine the dataframes for each season into one dataframe
     combined = pd.concat(dfs, ignore_index=True)
-    # only use data from regular season games
     combined = combined[combined['week'] <= 18]
-    # only keep the positions in the combined dataframe that we need
     combined = combined[combined['position'].isin(['QB', 'RB', 'WR', 'TE'])]
 
     save_cache(combined, "weekly_stats")
@@ -87,12 +104,12 @@ def load_weekly_stats():
 def load_schedule():
     if cache_is_valid("schedule"):
         return load_cache("schedule")
-    
+
     print("Fetching schedule data...")
 
     dfs = []
     for season in SEASONS:
-        df = nfl.import_schedules(years=[season])
+        df = nfl.load_schedules(seasons=[season]).to_pandas()
         df = df[[
             'season', 'week', 'game_type',
             'home_team', 'away_team',
@@ -101,7 +118,6 @@ def load_schedule():
         dfs.append(df)
 
     combined = pd.concat(dfs, ignore_index=True)
-    # only include regular season games
     combined = combined[combined['game_type'] == 'REG']
 
     save_cache(combined, "schedule")
@@ -110,24 +126,26 @@ def load_schedule():
 def load_rosters():
     if cache_is_valid("rosters"):
         return load_cache("rosters")
-    
+
     print("Fetching roster data...")
 
     dfs = []
     for season in SEASONS:
-        df = nfl.import_weekly_rosters(years=[season])
+        df = nfl.load_rosters_weekly(seasons=[season]).to_pandas()
         df = df[[
-            'player_id', 'player_name', 'first_name', 'last_name','position', 'team',
+            'gsis_id', 'full_name', 'first_name', 'last_name', 'position', 'team',
             'season', 'week', 'game_type', 'status',
             'status_description_abbr', 'years_exp',
             'entry_year', 'rookie_year', 'headshot_url'
         ]]
+        df = df.rename(columns={
+            'gsis_id':   'player_id',
+            'full_name': 'player_name'
+        })
         dfs.append(df)
 
     combined = pd.concat(dfs, ignore_index=True)
-    # only keep the positions in the combined dataframe that we need
     combined = combined[combined['position'].isin(['QB', 'RB', 'WR', 'TE'])]
-    # only include regular season games
     combined = combined[combined['game_type'] == 'REG']
 
     save_cache(combined, "rosters")

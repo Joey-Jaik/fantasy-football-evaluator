@@ -11,7 +11,7 @@
 
 import streamlit as st
 import pandas as pd
-from data.loader import load_all
+from data.loader import load_all, get_current_seasons
 from analysis.scoring import calculate_ppr_points
 from analysis.rankings import get_positional_rankings, get_career_rankings, get_trending_players
 from analysis.consistency import calculate_consistency, get_consistency_by_position
@@ -47,9 +47,11 @@ page = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 # create a selection box for user to choose season, with most recent season as the default selection
+seasons = get_current_seasons()
+
 selected_season = st.sidebar.selectbox(
     "Season",
-    options=[2024, 2023, 2022],
+    options=seasons[::-1],
     index=0
 )
 
@@ -255,8 +257,11 @@ elif page == "Player Profile":
                     avg_ppr_points    = ('ppr_points', 'mean'),
                     total_ppr_points  = ('ppr_points', 'sum'),
                     avg_passing_yds   = ('passing_yards', 'mean'),
+                    avg_passing_tds   = ('passing_tds', 'mean'),
                     avg_rushing_yds   = ('rushing_yards', 'mean'),
+                    avg_rushing_tds   = ('rushing_tds', 'mean'),
                     avg_receiving_yds = ('receiving_yards', 'mean'),
+                    avg_receiving_tds = ('receiving_tds', 'mean'),
                     avg_receptions    = ('receptions', 'mean'),
                     avg_targets       = ('targets', 'mean'),
                 )
@@ -271,8 +276,11 @@ elif page == "Player Profile":
                     'avg_ppr_points': 'Avg PPR',
                     'total_ppr_points': 'Total PPR',
                     'avg_passing_yds': 'Avg Pass Yds',
+                    'avg_passing_tds':   'Avg Pass TDs',
                     'avg_rushing_yds': 'Avg Rush Yds',
+                    'avg_rushing_tds':   'Avg Rush TDs',
                     'avg_receiving_yds': 'Avg Rec Yds',
+                    'avg_receiving_tds': 'Avg Rec TDs',
                     'avg_receptions': 'Avg Rec',
                     'avg_targets': 'Avg Targets'
                 }),
