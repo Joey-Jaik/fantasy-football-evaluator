@@ -11,11 +11,12 @@
 
 import streamlit as st
 import pandas as pd
-from data.loader import load_all, get_current_seasons
+from data.loader import load_all, get_current_seasons, get_season_info
 from analysis.scoring import calculate_ppr_points
 from analysis.rankings import get_positional_rankings, get_career_rankings, get_trending_players
 from analysis.consistency import calculate_consistency, get_consistency_by_position
 from analysis.injuries import calculate_injury_history, get_durability_summary, get_injury_report, get_current_injury_status
+from analysis.matchups import get_defensive_rankings, get_player_matchups, get_best_matchups, MATCHUP_LABELS
 
 # ── PAGE CONFIG ───────────────────────────────────────────
 st.set_page_config(
@@ -42,7 +43,7 @@ st.sidebar.markdown("---")
 # create page navigation UI
 page = st.sidebar.radio(
     "Navigate",
-    ["Draft Rankings", "Player Profile", "Season Stats"]
+    ["Draft Rankings", "Player Profile", "Season Stats", "Who To Start"]
 )
 
 st.sidebar.markdown("---")
@@ -232,7 +233,8 @@ elif page == "Player Profile":
                 st.markdown(f"**Team:** {team}")
 
                 if not player_roster.empty:
-                    years_exp = player_roster['years_exp'].dropna()
+                    latest_roster = player_roster[player_roster['season'] == player_roster['season'].max()]
+                    years_exp = latest_roster['years_exp'].dropna()
                     if not years_exp.empty:
                         st.markdown(f"**Experience:** {int(years_exp.iloc[0]) + 1} years")
 
@@ -438,4 +440,88 @@ elif page == 'Season Stats':
             hide_index=True
         )
         st.markdown("---")
+
+elif page == "Who To Start":
+    st.title("Who To Start")
+    st.markdown("Weekly start/sit recommendations based on current form, matchup quality, and consistency")
+    st.markdown("---")
+
+    # get whether or not we are in a current season, and if so what season and what week
+    is_active, current_season, current_week = get_season_info()
+
+    # if we are not in a current season then matchup evaluator is not available so display to user
+    if not is_active:
+        st.info("Who To Start is only available during the active NFL season. Check back when the season starts!")
+        st.markdown("In the meantime  use the **Draft Rankings** and **Season Stats** pages to prepare for your upcoming draft")
+    else:
+        st.success(f"Week {current_week} - {current_season} Season")
+        st.markdown("---")
+
+        try:
+            # get matchup data for current week
+            matchups = get_player_matchups(
+                weekly_stats,
+                schedule,
+                season=current_season,
+                week=current_week
+            )
+
+            if matchups.empty:
+                st.warning("No matchup data available for this week yet. Check back after the schedule is released")
+            else:
+                # get consistency data and merge into matchup data
+                consistency = calculate_consistency(weekly_stats, season=current_season)
+
+                matchups = matchups.merge(
+                    consistency[['player_id', 'grade']].rename(columns={'grade': 'consistency_grade'}),
+                    on='player_id',
+                    how='left'
+                )
+
+                # create new column in matchups dataframe that calculates a start score, algorithm uses average points, difficulty of matchup, and a players consistency, with averager points getting weighted the most and consistency weighted the least
+                matchups['start_score'] = (
+                    (matchups['avg_ppr_points'] * 0.5) +
+                    # subtract tier from 6 so that the highest tier (easiest matchup) adds the most points
+                    ((6 - matchups['matchup_tier'].fillna(3)) * 2) + 
+                    (matchups['consistency_grade'].map({'A': 4, 'B': 3, 'C': 2, 'D': 1}).fillna(2))
+                ).round(2)
+
+                matchups = matchups.sort_values('start_score', ascending=False)
+
+                positions_to_show = ['QB', 'RB', 'WR', 'TE'] if selected_position == 'All' else [selected_position]
+
+                # loop through each selected postion, create a dataframe that is filtered to just show data for that position
+                for position in positions_to_show:
+                    st.subheader(f"{position} - Week {current_week} Recommendations")
+
+                    pos_matchups = matchups[matchups['position'] == position].head(100)
+
+                    if pos_matchups.empty:
+                        st.info(f"No {position} matchup data available for this week")
+                        continue
+
+                    # create and display new data frame with appropriate data
+                    st.dataframe(
+                        pos_matchups[[
+                            'player_name', 'recent_team', 'opponent',
+                            'avg_ppr_points', 'matchup_label',
+                            'consistency_grade', 'start_score'
+                        ]].rename(columns={
+                            'player_name': 'Player',
+                            'recent_team': 'Team',
+                            'opponent': 'Opponent',
+                            'avg_ppr_points': 'Avg PPR',
+                            'matchup_label': 'Matchup',
+                            'consistency_grade': 'Consistency',
+                            'start_score': 'Start Score'
+                        }),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                    st.markdown("---")
+
+        except Exception as e:
+            st.error(f"Could not load matchup data: {e}")
+            st.info("Try again later or check back once the weekly schedule is released")
+
 

@@ -39,6 +39,17 @@ def is_active_season():
     month = datetime.datetime.now().month
     return month >= 9 or month <= 2
 
+def get_season_info():
+    if not is_active_season():
+        return False, None, None
+    
+    try:
+        current_season = nfl.get_current_season()
+        current_week = nfl.get_current_week
+        return True, current_season, current_week
+    except:
+        return False, None, None 
+
 def cache_duration_hours():
     return CACHE_DURATION_INSEASON if is_active_season() else CACHE_DURATION_OFFSEASON
 
